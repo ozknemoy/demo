@@ -1,0 +1,29 @@
+
+
+<div *ngIf="report">
+  <h5>Отчёт по результатам добавления компаний</h5>
+  <p>Количество добавляемых компаний: {{report.ok.length + report.fail.length}}</p>
+  <p>Количество успешно добавленных компаний: {{report.ok.length}}</p>
+  <p>Количество ошибок при добавлении компаний: {{report.fail.length}}</p>
+
+  <table class="table table-sm a-table--sm-header" *ngIf="report.fail.length">
+    <thead>
+    <tr>
+      <th class="cell-header__index">№</th>
+      <th class="cell-header__gln">GLN</th>
+      <th>Ошибка</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let error of report.fail;let $index = index">
+      <td>{{$index + 1}}</td>
+      <td>{{error.gln}}</td>
+      <td>{{error.reason}}</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div mat-dialog-actions>
+    <button class="btn btn-sm btn-primary" [mat-dialog-close]="null">Закрыть</button>
+  </div>
+</div>

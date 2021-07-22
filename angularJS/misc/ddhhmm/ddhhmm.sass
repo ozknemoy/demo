@@ -1,0 +1,33 @@
+@import '../../../css/ui-select.scss'
+
+$hardcodedDDHHMMSelectWidth: 50px!important
+
+table
+  ddhhmm-input
+    position: relative
+    .ui-select-container
+      input
+       text-indent: 2px
+    .selectize-dropdown
+      width: $hardcodedDDHHMMSelectWidth
+
+.ddhhmm-input,
+ddhhmm-input
+  display: flex
+  align-items: center
+  .ui-select-container
+    display: inline-block
+    width: 26%!important
+  &__label
+    padding-right: 2px
+  &__reset-btn
+    display: inline-block
+    width: 0
+    position: relative
+    top: -13px
+    left: -14px
+    cursor: pointer
+
+// для модалки надо прописывать ширину селекта в пикселях
+.select-fixed ddhhmm-input .ui-select-container
+  width: $hardcodedDDHHMMSelectWidth

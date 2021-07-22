@@ -1,0 +1,171 @@
+
+<div doc-toolbar status="::'viewing' | locale" user-role="toolbar">
+  <left>
+    <create-on-base-button id="intro-orders-create-btn" ng-if="::ctrl.isInDoc"></create-on-base-button>
+    <quick-doc-send-buttons></quick-doc-send-buttons>
+    <div id="intro-orders-view-toolbar">
+      <pdf-reader-button class="dib pr5"></pdf-reader-button>
+      <download-doc-button class="dib pr5"></download-doc-button>
+      <doc-relations class="dib pr5"></doc-relations>
+      <doc-mark class="dib" doc-info="ctrl.doc.info"></doc-mark>
+    </div>
+  </left>
+  <right>
+    <func-code-label doc="::ctrl.doc"></func-code-label>
+    <currency-label doc="::ctrl.doc"></currency-label>
+  </right>
+</div>
+
+<div diff-nets-view-ctrl="ctrl" ng-if="::ctrl.fDict" diff-nets-common-classes="dib w200;dib w300">
+  <div class="box row no-gutters">
+    <div class="col-12">
+      <orders-view-intro></orders-view-intro>
+      <button-history class="right"></button-history>
+      <doc-title doc="::ctrl.doc"></doc-title>
+    </div>
+    <div class="col-6">
+      <!--diff-nets-edit-raw тут чтобы отображалось всегда если заведено в админку-->
+      <div diff-nets-edit-raw="contractNumber" extra-classes="dib w200;dib w300" ng-hide="::ctrl.hideNumberAndDate">
+        <number-and-date number-prop="contractNumber"
+                         date-prop="contractDate"
+                         callback="ctrl.hideNumberAndDate = $isEmpty"
+                         object="::ctrl.doc.header"></number-and-date>
+      </div>
+      <div diff-nets-view="commentText"></div>
+      <div diff-nets-view="deliveryConditions"></div>
+      <div diff-nets-view="additionalInfo"></div>
+      <div diff-nets-view="paymentInfo"></div>
+      <div diff-nets-view="deliveryTypeLabel"></div>
+      <div diff-nets-view="shippingDate" type="date"></div>
+      <div diff-nets-view="ordersDeliveryDate" type="date"></div>
+      <div diff-nets-view="deliveryDate" type="date"></div>
+      <div diff-nets-view="dateOfPrice" type="date"></div>
+      <div diff-nets-view="orderPrpNumber"></div>
+      <div class="dib" diff-nets-view="receivingDateFrom" type="date" extra-classes="dib pr10;dib pr10"></div>
+      <div class="dib" diff-nets-view="receivingDateTo" type="date" extra-classes="dib pr10;dib pr10"></div>
+      <div ng-if="::ctrl.doc.header.prepaidFlag === true" diff-nets-view-raw="prepaidFlag"></div>
+      <div ng-if="::ctrl.doc.header.fresh === true" diff-nets-view-raw="fresh"></div>
+      <div diff-nets-view="deliveryCode"></div>
+      <div diff-nets-view="deliveryCodeLabel"></div>
+      <div diff-nets-view-raw="partialShipment" ng-if="::ctrl.doc.header.partialShipment"></div>
+      <div diff-nets-view="correctionNumber"></div>
+      <div ng-if="::ctrl.doc.header.deliveryAtBuyersExpense" diff-nets-view-raw="deliveryAtBuyersExpense"></div>
+      <div diff-nets-view="ordersExtSystemNumber"></div>
+    </div>
+    <div class="col-6">
+      <div diff-nets-view="orderTypeLabel"></div>
+      <div ng-if="::ctrl.doc.header.promo" diff-nets-view-raw="promo"></div>
+      <div diff-nets-view="equipmentPallet"></div>
+      <div diff-nets-view="changeOrderNum"></div>
+      <div diff-nets-view="processingType"></div>
+      <div ng-if="::ctrl.doc.header.supplyDirectDelivery" diff-nets-view-raw="supplyDirectDelivery"></div>
+      <div ng-if="::ctrl.doc.header.mixPallet" diff-nets-view-raw="mixPallet"></div>
+      <div diff-nets-view="totalGrossWeight" type="number"></div>
+      <div diff-nets-view="totalGrossVolume" type="number"></div>
+      <div class="dib" diff-nets-view="deliveryServiceDateFrom" type="date" extra-classes="dib pr10;dib pr10"></div>
+      <div class="dib" diff-nets-view="deliveryServiceDateTo" type="date" extra-classes="dib pr10;dib pr10"></div>
+    </div>
+      <div class="col-6">
+        <company-info class="pr10" company="::ctrl.doc.header.seller" name="Продавец" buyer-seller="true"></company-info>
+        <company-info class="pr10" ng-if="::ctrl.doc.header.shipper"
+                      company="::ctrl.doc.header.shipper" name="Грузоотправитель"></company-info>
+      </div>
+
+      <div class="col-6">
+        <company-info id="intro-orders-receiver"
+                      company="::ctrl.doc.header.buyer"
+                      show-creator="true"
+                      name="Покупатель"
+                      buyer-seller="true"></company-info>
+        <company-info company="::ctrl.doc.header.deliveryPoint"
+                      name="Точка доставки"
+                      show-creator="true"
+                      revealed="::true"></company-info>
+        <company-info ng-if="::ctrl.doc.header.dopDeliveryPoint.gln"
+                      company="::ctrl.doc.header.dopDeliveryPoint" name="Конечная точка доставки"></company-info>
+        <company-info ng-if="::ctrl.doc.header.payer.gln"
+                      company="::ctrl.doc.header.payer" name="Плательщик"></company-info>
+      </div>
+
+    <!--расписание доставки-->
+    <div ng-if="ctrl.isShow('transport')" class="row-12">
+      <h4 class="txt-gray">Информация о транспорте</h4>
+      <table ng-if="::ctrl.schedule.length" class="doc-table-view table table-bordered">
+        <thead>
+        <tr>
+          <th colspan="2">
+            <div class="txt-center">Прибытие транспорта</div>
+          </th>
+          <th colspan="4">
+            <div class="txt-center">Вывоз товара от поставщика</div>
+          </th>
+        </tr>
+        <tr>
+          <th><div class="txt-center">Предполагаемая дата</div></th>
+          <th><div class="txt-center">Предполагаемое время</div></th>
+          <th><div class="txt-center">Дата начала</div></th>
+          <th><div class="txt-center">Время начала</div></th>
+          <th><div class="txt-center">Дата окончания</div></th>
+          <th><div class="txt-center">Время окончания</div></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="row in ctrl.schedule track by $index">
+          <td ng-repeat="date in row track by $index">
+            <div class="txt-center">{{::date}}</div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <div>
+        Количество автомашин: {{::ctrl.doc.header.schedule.length}}
+      </div>
+    </div>
+  </div>
+  <div class="box" ng-if="::ctrl.doc.header.shippingPoint.length">
+    <simple-view-table
+        sort-by-prop="name"
+        table-title="Список точек загрузки"
+        table-th="Название;Регион;Адрес"
+        table-td="name;regionName;_fullAddress"
+        table="ctrl.doc.header.shippingPoint"></simple-view-table>
+  </div>
+  <div class="box" ng-if="::ctrl.selfDelivery && ctrl.doc.header.transportTypes.length">
+    <simple-view-table
+        sort-by-prop="type"
+        table-title="Список типов транспортных средств"
+        table-th="Код;Тип"
+        table-td="type;typeLabel"
+        table="ctrl.doc.header.transportTypes"></simple-view-table>
+  </div>
+  <div class="box-small">
+    <h4 class="txt-gray">Товары</h4>
+    <edi-table-view type="{{::ctrl.docName}}" ng-if="::ctrl.doc"
+                    without-base-doc
+                    doc="::ctrl.doc"></edi-table-view>
+    <div class="table__footer-sum" ng-if="::ctrl.fDict">
+      <ul>
+        <li ng-if="::ctrl.doc.item.length">
+          <div>Кол-во строк</div>
+          <div>{{::ctrl.doc.item.length}}</div>
+        </li>
+        <li ng-if="::ctrl.doc.header.totalSum !== null">
+          <div>Сумма </div>
+          <div>
+            {{::ctrl.doc.header.totalSum | thousand}} в том числе НДС
+            {{::ctrl.doc.header.totalTaxSum | thousand}}
+          </div>
+        </li>
+        <li ng-if="::ctrl.doc.header.totalSumWithoutTax !== null">
+          <div>Сумма без НДС</div>
+          <div>{{::ctrl.doc.header.totalSumWithoutTax | thousand}}</div>
+        </li>
+        <li diff-nets-view="totalNqty" type="number"></li>
+        <li diff-nets-view="totalNetWeight" type="number"></li>
+        <li diff-nets-view="paletteQty" type="number"></li>
+        <li diff-nets-view="totalPackCount" type="number"></li>
+        <li diff-nets-view="discountSum" type="number"></li>
+      </ul>
+    </div>
+  </div>
+</div>

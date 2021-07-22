@@ -1,0 +1,100 @@
+<ngx-loading [show]="filterLoading"></ngx-loading>
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-12">
+      <div class="float-right">
+        <button class="btn btn-sm btn-primary ml-1" (click)="filterComps()">Фильтровать</button>
+        <button class="btn btn-sm btn-outline-primary ml-1" (click)="clearFilter()">Очистить фильтр</button>
+        <companies-batch-creation
+          userRole
+          userRolePermission="batch_create"></companies-batch-creation>
+        <a class="btn btn-sm btn-outline-warning ml-1" [routerLink]="['../', urls.comp.name, -1]"
+           [userRole]="userRole"
+           userRolePermission="create">Добавить компанию</a>
+      </div>
+      <h2>{{urls.comps.title}}</h2>
+    </div>
+    <div class="col">
+      <div class="w-100">
+        <companies-multi-select placeholder="Компания" [model]="filter.id" (onChange)="filter.id = $event"></companies-multi-select>
+      </div>
+      <mat-form-field class="w-100">
+        <input matInput [(ngModel)]="filter.inn" placeholder="ИНН">
+      </mat-form-field>
+      <mat-form-field class="w-100">
+        <input matInput [(ngModel)]="filter.kpp" placeholder="КПП">
+      </mat-form-field>
+    </div>
+    <div class="col">
+      <mat-form-field class="w-100">
+        <input matInput [(ngModel)]="filter.ogrn" placeholder="ОГРН">
+      </mat-form-field>
+      <mat-form-field class="w-100">
+        <input matInput [(ngModel)]="filter.director" placeholder="Директор">
+      </mat-form-field>
+      <mat-form-field class="w-100">
+        <mat-select multiple [(ngModel)]="filter.bannerId" placeholder="Баннер">
+          <mat-option *ngFor="let region of bannerList" [value]="region.id">
+            {{region.name}}
+          </mat-option>
+        </mat-select>
+        <button mat-button matSuffix mat-icon-button title="Удалить"
+                preventDefault
+                *ngIf="filter.bannerId?.length"
+                (click)="filter.bannerId = null">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+      <div>
+        <tripple-checkbox label="Доступ в трекер" [(value)]="filter.hasTracker"></tripple-checkbox>
+      </div>
+    </div>
+  </div>
+</div>
+
+<table class="table table-striped table-hover table-sm a-table--sm-header sticky-table-header">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Наименование</th>
+    <th>GLN</th>
+    <th>ИНН</th>
+    <th>КПП</th>
+    <th>ОГРН</th>
+    <th>Директор</th>
+    <th>Доступ в трекер</th>
+    <th>Баннер</th>
+    <th class="column--two-icon"></th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let comp of comps | slice : pagerStart : pagerEnd; trackBy: trackById let $index = index">
+    <td>{{comp.id}}</td>
+    <td>{{comp.name}}</td>
+    <td>{{comp.gln}}</td>
+    <td>{{comp.inn}}</td>
+    <td>{{comp.kpp}}</td>
+    <td>{{comp.ogrn}}</td>
+    <td>{{comp.director}}</td>
+    <td><boolean [model]="comp.hasTracker"></boolean></td>
+    <td>{{bannerListFlatten[comp.banner?.typeId]}}</td>
+    <td>
+      <mat-icon class="cursor-pointer" [routerLink]="['../', urls.comp.name, comp.id]"
+                [userRole]="userRole"
+                [userRolePermission]="['view', 'update']"
+                title="Редактировать">edit</mat-icon>
+      <mat-icon class="cursor-pointer" [routerLink]="['../', urls.comp.name, comp.id, urls.compsHistory.name]"
+                [userRole]="'../' + urls.comp.name + '/:id/' + urls.compsHistory.name"
+                title="История">history_edu</mat-icon>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<div class="table__paginator-offset"></div>
+<mat-paginator [length]="comps?.length" class="table__paginator"
+               [pageSize]="pageSize"
+               [pageSizeOptions]="pageSizeOptions"
+               (page)="onPageChange($event)"></mat-paginator>

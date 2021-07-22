@@ -1,0 +1,251 @@
+
+<div doc-toolbar status="(desadv.isNewDoc? 'creating' : 'editing') | locale">
+  <left>
+    <a href ng-click="desadv.send()" title="Отправить"
+       id="intro-send-desadv"><i class="tool-20 i-mail"></i></a>
+    <a href ng-click="desadv.save()" title="Сохранить"><i class="tool-20 i-save"></i></a>
+    <a ui-sref="pdf-reader({id:desadv.docId,type:'pdf_pallet',direction:'draft'})"
+       ng-if="desadv._showPackRef"
+       title="Печать упаковочного листа. Распечатаны будут только сохраненные данные"
+       target="_blank">
+      <i class="tool-20 i-print"></i>
+    </a>
+    <delete-draft-doc></delete-draft-doc>
+    <doc-relations></doc-relations>
+  </left>
+  <right>
+    <func-code-label doc="::desadv.doc"></func-code-label>
+    <currency-label doc="::desadv.doc"></currency-label>
+    <span ng-if="::desadv.courierSettings.sendToCourierChecked">
+      <span class="tag primary">Отправить в Курьер</span>
+    </span>
+  </right>
+</div>
+
+<!--не ставить bind-once на showDocForm -->
+<div ng-if="desadv.showDocForm && desadv.fDict" diff-nets-view-ctrl="desadv">
+<div class="box items">
+  <doc-title doc="::desadv.doc"></doc-title>
+
+  <div class="message danger" ng-if="desadv.errors.length">
+    <div ng-repeat="e in desadv.errors track by $index">{{e}}</div>
+  </div>
+
+  <div class="dib width-55">
+    <div>
+      <div diff-nets-edit="docNum" type="text"
+           id="intro-docNum"
+           ng-class="::{'pointer-none':desadv.doc.header.funcCode !== 9}"
+           extra-classes="dib w200;may-required dib w200" class="dib"></div>
+      <div diff-nets-edit="docDate" type="date"
+           ng-class="::{'pointer-none':desadv.doc.header.funcCode !== 9}"
+           extra-classes="dib pr5;may-required dib w200" class="dib"></div>
+    </div>
+    <div>
+      <div diff-nets-edit="invoiceNumber" type="text" extra-classes="dib w200;may-required dib w200" class="dib"></div>
+      <div diff-nets-edit="invoiceDate" type="date" extra-classes="dib pr5;may-required dib w200" class="dib"></div>
+    </div>
+    <div>
+      <div diff-nets-edit="deliveryNoteNumber" type="text" extra-classes="dib w200;may-required dib w200" class="dib"></div>
+      <div diff-nets-edit="deliveryNoteDate" type="date" extra-classes="dib pr5;may-required dib w200" class="dib"></div>
+    </div>
+    <div>
+      <div diff-nets-edit="sfNum" type="text" extra-classes="dib w200;may-required dib w200" class="dib"></div>
+      <div diff-nets-edit="dateSf" type="date" extra-classes="dib pr5;may-required dib w200" class="dib"></div>
+    </div>
+    <div>
+      <div diff-nets-edit="contractNum" type="text" extra-classes="dib w200;may-required dib w200" class="dib"></div>
+      <div diff-nets-edit="contractDate" type="date" extra-classes="dib pr5;may-required dib w200" class="dib"></div>
+    </div>
+    <div diff-nets-edit-raw="invoicee.gln" extra-classes="dib w200;dib w200">
+      <div class="input-async-wrapper">
+        <input type="text" class="k-textbox"
+               placeholder="Начните вводить..."
+               ng-model="desadv.doc.header.invoicee.gln"
+               typeahead-wait-ms="300"
+               typeahead-min-length="3"
+               typeahead-no-results="[]"
+               typeahead-loading="desadv.deliveryPointDictionaryLoading"
+               typeahead-template-url="autocomplete-select-name-gln.tmpl.html"
+               uib-typeahead="deliveryPoint.gln for deliveryPoint in desadv.deliveryPointDictionary | orSearch: {name: $viewValue, gln: $viewValue} : 10 ">
+        <i ng-if="desadv.deliveryPointDictionaryLoading" class="i-refresh loading"></i>
+      </div>
+    </div>
+    <div diff-nets-edit="documentsProvidingLabel" type="list"
+         method="getStandardDict" method-params="doc_providing_method;{{::desadv.doc.header.buyer.id}}"
+         o-value="code" o-name="name"
+         have-del-btn="documentsProvidingLabel;documentsProviding"
+         on-change="desadv.doc.header.documentsProviding = $item.code"></div>
+    <div diff-nets-edit="documentsTypeLabel" type="list"
+         method="getStandardDict" method-params="doc_providing_type;{{::desadv.doc.header.buyer.id}}"
+         o-value="code" o-name="name"
+         have-del-btn="documentsTypeLabel;documentsType"
+         on-change="desadv.doc.header.documentsType = $item.code"></div>
+    <div diff-nets-edit="shippingDate" type="date-time"></div>
+    <div diff-nets-edit="deliveryDate" type="date-time"
+         ng-class="::{disabled:desadv.settings.DeliveryDateChange}"></div>
+    <div diff-nets-edit="arrivalDate" type="date-time"></div>
+    <div diff-nets-edit="egaisNumber" extra-classes="pt0 dib w200;may-required dib w200"></div>
+    <div diff-nets-edit="comment" type="textarea"></div>
+  </div>
+  <div class="dib pl5 width-40">
+    <div diff-nets-edit-raw="partialShipment">
+      <input type="checkbox"
+             ng-model="desadv.doc.header.partialShipment"
+             ng-change="desadv.doc.header.lastShipmentChange = false"/>
+    </div>
+    <div ng-if="desadv.doc.header.partialShipment">
+      <div class="pt5 dib w200">Последняя отгрузка</div>
+      <div class="may-required may-required dib">
+        <input type="checkbox" ng-model="desadv.doc.header.lastShipment"/>
+      </div>
+    </div>
+    <div diff-nets-edit="deliveryNumber"></div>
+    <div diff-nets-edit="sealNumber"></div>
+    <div diff-nets-edit="deliveryTypeLabel"
+         type="list"
+         method="getStandardDict"
+         method-params="shipments_condition;{{::desadv.doc.header.buyer.id}};DESADV"
+         on-change="desadv.doc.header.deliveryType = $item.code"
+         o-value="name"
+         o-name="name"
+         have-del-btn="deliveryType;deliveryTypeLabel"></div>
+    <div class="box-small box-small--negative-margin dib"
+         ng-if="::desadv.isShowBatch('manufacturerGln')">
+      <div class="move-up">
+          <span class="move-up__label">
+            Производитель
+            <helper-tooltip class="move-up__icon">
+              Для автоматического заполнения добавьте производителей в раздел <a target="_blank" ui-sref="settings.partners">"Партнеры"</a>
+            </helper-tooltip>
+          </span>
+      </div>
+      <div diff-nets-edit-raw="manufacturerGln" extra-classes="dib p0 w200;dib w200">
+        <input kendo-combo-box
+               k-filter="'contains'"
+               k-placeholder="'Выберите...'"
+               k-data-source="desadv.manufacturerGlnsList"
+               k-on-change="desadv.manufacturerGlnChange(kendoEvent)"
+               k-data-text-field="'companyName'"
+               k-data-value-field="'companyGln'"
+               k-template="'#:companyGln# - #:companyName#'"
+               k-options="desadv.manufacturerGlnsOptions"
+               ng-model="desadv.doc.header.manufacturerGln">
+      </div>
+    </div>
+      <div diff-nets-edit="carDriver"></div>
+      <div diff-nets-edit="carDriverPhone"></div>
+      <div diff-nets-edit="carModel"></div>
+      <div diff-nets-edit="carNumber"></div>
+      <div diff-nets-edit="carNumberExtra"></div>
+      <div diff-nets-edit="trailerNumber"></div>
+      <div diff-nets-edit="transportTypeLabel"
+           on-change="desadv.doc.header.transportType=$item.code"
+           have-del-btn="transportTypeLabel;transportType"
+           o-value="name"
+           o-name="name"
+           type="list"
+           method="getStandardDict"
+           method-params="transport_types;{{::desadv.doc.header.buyer.id}}"></div>
+
+    <comment-undersupply doc="desadv.doc" doc-type="desadv" parent-doc="::desadv.parentDoc"></comment-undersupply>
+
+  </div>
+
+  <section class="company-info-wrapper">
+    <div>
+      <company-info ng-if="::desadv.isShow('seller')"
+                    company="desadv.doc.header.seller"
+                    name="{{::desadv.getName('seller')}}"
+                    buyer-seller="true"></company-info>
+      <company-info ng-if="::desadv.isShow('shipper')"
+                    force-show="::true"
+                    company="desadv.doc.header.shipper"
+                    name="{{::desadv.getName('shipper')}}">
+        <edit-company-bar
+            select-button="true" add-button="true" edit-button="true"
+            can-change-partner="true"
+            company="desadv.doc.header.shipper"
+            title="{{::desadv.getName('shipper')}}"
+            id="{{::desadv.doc.header.seller.id}}"
+            callback="desadv.doc.header.shipper = $data"></edit-company-bar>
+      </company-info>
+    </div>
+
+    <div>
+      <company-info ng-if="::desadv.isShow('buyer')"
+                    company="desadv.doc.header.buyer"
+                    name="{{::desadv.getName('buyer')}}"
+                    buyer-seller="true"></company-info>
+      <company-info ng-if="::desadv.isShow('deliveryPoint')"
+                    company="desadv.doc.header.deliveryPoint"
+                    hide-additional-info="::desadv.isX5"
+                    revealed="::true"
+                    name="{{::desadv.getName('deliveryPoint')}}"></company-info>
+      <company-info ng-if="::desadv.isShow('dopDeliveryPoint')"
+                    company="desadv.doc.header.dopDeliveryPoint"
+                    name="{{::desadv.getName('dopDeliveryPoint')}}"></company-info>
+      <company-info ng-if="::desadv.isShow('payer')"
+                    company="desadv.doc.header.payer"
+                    name="{{::desadv.getName('payer')}}"></company-info>
+    </div>
+  </section>
+
+  <a target="_blank" ng-if="desadv._showPackRef"
+     ui-sref="desadv-package-list({id:desadv.docId,direction:'draft'})"
+     title="Показать упаковочный лист. Показаны будут только сохраненные данные">
+    Упаковочный лист
+  </a>
+</div>
+
+<desadv-sscc-table
+        ng-if="::desadv.settings.DesadvPallete"
+        selected-goods="desadv.selectedGoods"
+        selected-returned-packs="desadv.selectedReturnedPacks"
+        after-upload-sscc-file="desadv.afterUploadSsccFile($desadv)"
+        doc="desadv.doc"></desadv-sscc-table>
+
+<div class="box-small">
+  <h4 class="txt-gray">Товары</h4>
+
+  <div class="item">
+    <table-edit-goods-desadv doc="desadv.doc"
+                             on-select-goods="desadv.selectedGoods = $select"></table-edit-goods-desadv>
+
+    <table-edit-returned-packages-desadv
+        on-select-goods="desadv.selectedReturnedPacks = $select"
+        ng-if="desadv.settings.settings_showReturnedPackages"
+        doc="desadv.doc"></table-edit-returned-packages-desadv>
+
+    <table-footer-sum class="table__footer-sum pt10"
+            always-listen
+            table="desadv.doc.item"
+            fields="::desadv.footerFields"
+            on-change="desadv.afterFooterCount($footer)">
+      <ul>
+        <li>
+          <div>Кол-во строк</div>
+          <div>{{desadv.doc.item.length + desadv.doc.returnedPacks.length}}</div>
+        </li>
+        <li>
+          <div>Сумма </div>
+          <div>
+            {{desadv.doc.header.totalSum | thousand}} в том числе НДС
+            {{desadv.doc.header.sumNds | thousand}}
+          </div>
+        </li>
+        <li>
+          <div>
+            <span class="total-sum-helper__sign" ng-include="'total-sum-helper.tmpl.html'"></span>Сумма без НДС
+          </div>
+          <div>{{desadv.doc.header.totalSumWithoutTax | thousand}}</div>
+        </li>
+        <li diff-nets-edit="discountSum" type="number" extra-classes="dib w200;dib w100!"
+            on-change="desadv.countTotalSumWithDiscount()"></li>
+        <li diff-nets-view="totalSumWithDiscount" type="number-dynamic"></li>
+        <li diff-nets-view="shippedQuantity" type="number-dynamic"></li>
+      </ul>
+    </table-footer-sum>
+  </div>
+</div>
+</div>

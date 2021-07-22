@@ -1,0 +1,341 @@
+
+<ngx-loading [show]="loading"></ngx-loading>
+
+<form class="container-fluid"
+      *ngIf="showForm"
+      [formGroup]="relForm"
+      [ngClass]="{scrollable: isTmplRel}">
+  <div class="row">
+    <div class="col">
+      <button type="button" class="btn btn-sm btn-primary float-right"
+              *ngIf="!isTmplRel"
+              (click)="validateAndSaveRel()">Сохранить</button>
+      <h2>{{isNewRel ? 'Создание' : 'Редактирование'}} взаимосвязи</h2>
+    </div>
+  </div>
+
+
+  <div class="row">
+    <div class="col">
+      <div class="w-100 asterix-for-label" *ngIf="!isTmplRel">
+        <companies-select placeholder="Компания-отправитель"
+                          [ngClass]="{'pointer-none': relForm.get('senderId').disabled}"
+                          [model]="relForm.get('senderId').value"
+                          (onChange)="onChangeSender($event)"></companies-select>
+      </div>
+
+      <div class="w-100 asterix-for-label" *ngIf="!isTmplRel">
+        <companies-select placeholder="Компания-получатель"
+                          [ngClass]="{'pointer-none': relForm.get('receiverId').disabled}"
+                          [model]="relForm.get('receiverId').value"
+                          (onChange)="relForm.get('receiverId').setValue($event)"></companies-select>
+      </div>
+      <mat-form-field class="w-100 asterix-for-label" *ngIf="isTmplRel">
+        <mat-label>Направление</mat-label>
+        <mat-select formControlName="isSender">
+          <mat-option [value]="false">Входящий</mat-option>
+          <mat-option [value]="true">Исходящий</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="w-100 asterix-for-label">
+        <mat-label>Тип документа</mat-label>
+        <!-- тут [formControl] тк переинициализация формы не затронет disabled для mat-select
+             вызов disable() тоже не помогает
+        -->
+        <mat-select [formControl]="relForm.get('docTypeId')" (ngModelChange)="onChangeDocType()">
+          <mat-option>
+            <ngx-mat-select-search [formControl]="_documentTypesId" placeholderLabel=""></ngx-mat-select-search>
+          </mat-option>
+          <mat-option *ngFor="let type of docTypes$$ | async | filter : {documentAttr: _documentTypesId.value}"
+                      [value]="type.documentTypesId">
+            {{type.documentAttr}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-50 asterix-for-label">
+        <mat-label>Формат отправителя</mat-label>
+        <mat-select formControlName="senderFormatId">
+          <mat-option>
+            <ngx-mat-select-search [formControl]="_sFormatId" placeholderLabel=""></ngx-mat-select-search>
+          </mat-option>
+          <mat-option *ngFor="let f of relFormat$$ | async | filter : {name: _sFormatId.value}" [value]="f.id">
+            {{f.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-50 asterix-for-label">
+        <mat-label>Формат получателя</mat-label>
+        <mat-select formControlName="receiverFormatId">
+          <mat-option>
+            <ngx-mat-select-search [formControl]="_rFormatId" placeholderLabel=""></ngx-mat-select-search>
+          </mat-option>
+          <mat-option *ngFor="let f of relFormat$$ | async | filter : {name: _rFormatId.value}" [value]="f.id">
+            {{f.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-50 asterix-for-label">
+        <mat-label>Кодировка отправителя</mat-label>
+        <mat-select formControlName="senderCodingId">
+          <mat-option *ngFor="let f of coding$$ | async" [value]="f.id">
+            {{f.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-50 asterix-for-label">
+        <mat-label>Кодировка получателя</mat-label>
+        <mat-select formControlName="receiverCodingId">
+          <mat-option *ngFor="let f of coding$$ | async" [value]="f.id">
+            {{f.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-50 asterix-for-label">
+        <mat-label>Протокол отправителя</mat-label>
+        <mat-select formControlName="senderProtocolId" (ngModelChange)="checkTransitDocAndEancomOut()">
+          <mat-option *ngFor="let f of relProtocol$$ | async" [value]="f.id">
+            {{f.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-50 asterix-for-label">
+        <mat-label>Протокол получателя</mat-label>
+        <mat-select formControlName="receiverProtocolId" (ngModelChange)="checkTransitDocAndEancomOut()">
+          <mat-option *ngFor="let f of relProtocol$$ | async" [value]="f.id">
+            {{f.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-100">
+        <input matInput type="text" formControlName="fileName" placeholder="Шаблон имени файла">
+      </mat-form-field>
+
+      <mat-expansion-panel class="mb-2">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="text-muted"><mat-icon>contact_support</mat-icon>Подсказка по шаблону</mat-panel-title>
+          <mat-panel-description></mat-panel-description>
+        </mat-expansion-panel-header>
+
+        Шаблон имени файла представляет собой само имя файла, где изменяемые части заменены на ключевые слова, ограниченные слева и справа символом % (знак процента). При отправке документа в имени файла будет произведена подстановка ключевого слова вместе с обрамляющими знаками % на соответствующее значение. В имени файла разрешено использовать буквы латинского алфавита в любом регистре (имя файла регистрозависимое), цифры и символы - минус, подчёркивание, фигурные скобки, точка.
+        <br>
+        Различаются следующие ключевые слова для подстановки:
+
+        <ul>
+        <li>GLNDP - ГЛН точки доставки</li>
+        <li>GLNSU - ГЛН поставщика</li>
+        <li>GLNSE – ГЛН отправителя (в PRICAT)</li>
+        <li>GLNBY – ГЛН покупателя</li>
+        <li>GLNCN – ГЛН грузополучателя</li>
+        <li>GLNCZ – ГЛН грузоотправителя</li>
+        <li>GLNIV - ГЛН плательщика</li>
+        <li>GLNSF - ГЛН точки отгрузки</li>
+        <li>FNC_CODE - функциональный код</li>
+        <li>GUID - автоматически сгенерированный уникальный идентификатор</li>
+        <li>FILEID - внутренний уникальный ид файла документа в Сфера EDI</li>
+        <li>INTEST - взаимосвязь тестовая или продуктивная, принимает соответственно значение T или P</li>
+        <li>DOCTYPE - код вида документа взаимосвязи</li>
+        <li>ORDER_NUM - номер заказа</li>
+        <li>DELIVERY_DATE дата доставки</li>
+        <li>REFDOCTYPE - код документа-основания (в APERAK)</li>
+        <li>INIT_DATE - дата документа из DTM[137]</li>
+        <li>Если шаблон имени файла не задавать, то по умолчанию будет применён шаблон: %FILEID%_%DOCTYPE%_%GLNSU%_%INTEST%.xml</li>
+        <li>Если в шаблоне имени файла присутствует дробь, то это указывает, что файл необходимо положить в подпапку.</li>
+        <li>Дробями разделяются подпапки и имя файла.</li>
+        <li>Подпапка будет создана автоматически.</li>
+        </ul>
+      </mat-expansion-panel>
+
+
+      <mat-form-field class="w-100 asterix-for-label">
+        <input matInput type="number" formControlName="docSequence" placeholder="Порядок следования">
+      </mat-form-field>
+
+      <mat-form-field class="w-100">
+        <mat-label>Проверять уникальность</mat-label>
+        <mat-select formControlName="checkUniqueType">
+          <mat-option *ngFor="let type of uniqueTypes$$ | async" [value]="type.id">
+            {{type.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div *ngIf="!isTmplRel">
+        Код взаимосвязи (отправитель): {{senderWsCode}}
+        <br>
+        Код взаимосвязи (получатель): {{receiverWsCode}}
+      </div>
+    </div>
+
+
+
+    <div class="col">
+      <div>
+        <mat-checkbox color="primary" formControlName="needMail"
+                      (ngModelChange)="onChangeNeedMail($event)">
+          Высылать уведомление о доставке документа
+        </mat-checkbox>
+      </div>
+      <div *ngIf="relForm.controls.needMail.value">
+        Email для рассылки уведомлений о доставке документа
+        <string-array-edit [value]="relForm.controls.mails.value"
+                           (onChange)="relForm.controls.mails.setValue($event)"
+                           like-string></string-array-edit>
+      </div>
+
+      <mat-form-field class="w-100" *ngIf="!isTmplRel && this.specialEmailId.enabled">
+        <mat-label>Тип уведомления (заказ)</mat-label>
+        <mat-select [formControl]="specialEmailId">
+          <mat-option *ngFor="let f of specialEmail$$ | async" [value]="f.id">{{f.name}}</mat-option>
+        </mat-select>
+        <button mat-button matSuffix mat-icon-button
+                preventDefault
+                title="Удалить из базы"
+                *ngIf="specialEmailId.value"
+                (click)="deleteSpecialEmailId()">
+          <mat-icon>cancel</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <div>
+        <mat-checkbox color="primary" formControlName="needReceiverSendErrorMail"
+                      (ngModelChange)="onChangeNeedReceiverSendErrorMail($event)">
+          Уведомлять получателя об ошибках
+        </mat-checkbox>
+      </div>
+      <div *ngIf="relForm.controls.needReceiverSendErrorMail.value">
+        Email для рассылки уведомлений об ошибках
+        <string-array-edit [value]="relForm.controls.receiverMail.value"
+                           (onChange)="relForm.controls.receiverMail.setValue($event)"
+                           like-string></string-array-edit>
+      </div>
+
+      <div>
+        <mat-checkbox color="primary" formControlName="isTransitDoc"
+                      (ngModelChange)="checkTransitDocAndEancomOut()">
+          Транзитный документ
+        </mat-checkbox>
+      </div>
+      <div>
+        <mat-checkbox color="primary" formControlName="needEancomOut"
+                      (ngModelChange)="checkTransitDocAndEancomOut()">
+          Формировать выходной EANCOM
+        </mat-checkbox>
+      </div>
+      <div>
+        <mat-checkbox color="primary" formControlName="needReceiverPriceList"
+                      (ngModelChange)="onChangeNeedReceiverPriceList()">
+          Использовать прайс поставщика
+        </mat-checkbox>
+      </div>
+      <div>
+        <mat-checkbox color="primary" formControlName="canMerge">Добавление товаров, если их нет в прайсах</mat-checkbox>
+      </div>
+      <div>
+        <mat-checkbox color="primary" formControlName="loadWithError">Грузить с ошибками (товар не найден)</mat-checkbox>
+      </div>
+      <div>
+        <mat-checkbox color="primary" formControlName="needOriginDoc"
+                      (ngModelChange)="onChangeNeedOriginDoc()">
+          Передавать исходный документ
+        </mat-checkbox>
+      </div>
+      <div>
+        <mat-checkbox color="primary" formControlName="searchDocParent">Искать основание</mat-checkbox>
+      </div>
+      <div>
+        <mat-checkbox color="primary" formControlName="needSla">Включать в SLA</mat-checkbox>
+      </div>
+      <!--<div>
+        <mat-checkbox color="primary" formControlName="canCreate">Новый документ</mat-checkbox>
+      </div>-->
+      <!--<div>
+        <mat-checkbox color="primary" formControlName="needDebug">Отладка</mat-checkbox>
+      </div>-->
+      <div>
+        <mat-checkbox color="primary" formControlName="cleanXmlIn">Очистить вх. док</mat-checkbox>
+      </div>
+      <div>
+        <mat-checkbox color="primary" formControlName="needAperak">Отправлять АПЕРАК</mat-checkbox>
+      </div>
+      <div>
+        <mat-checkbox color="primary" formControlName="isVet"
+                      (ngModelChange)="onChangeIsVet($event)">Ветконнект</mat-checkbox>
+      </div>
+      <div *ngIf="!isTmplRel">
+        <mat-checkbox color="primary" formControlName="vetSendDocOnError">Отправлять получателю при ошибке в Меркурии</mat-checkbox>
+      </div>
+      <div *ngIf="!isTmplRel">
+        <mat-checkbox color="primary" formControlName="isLocked">Неактивна</mat-checkbox>
+      </div>
+
+      <!--<small>
+        <pre>{{relForm.getRawValue() | json}}</pre>
+      </small>-->
+    </div>
+
+    <div class="col">
+      <mat-card>
+        <mat-form-field class="w-100">
+          <mat-label>Выгружать в курьер</mat-label>
+          <mat-select formControlName="loadToCourier" (ngModelChange)="onChangeLoadToCourier($event)">
+            <mat-option *ngFor="let l of loadToCourierList$$ | async" [value]="l.id">
+              {{l.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+
+        <mat-form-field class="w-100 asterix-for-label">
+          <mat-label>Стенд Курьера</mat-label>
+          <mat-select formControlName="courierStand">
+            <mat-option *ngFor="let s of courierStandList$$ | async" [value]="s.id">
+              {{s.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field class="w-100 asterix-for-label">
+          <mat-label>Отправка по маршруту в Курьере</mat-label>
+          <mat-select formControlName="needCourierSent">
+            <mat-option *ngFor="let r of routeCourierSendList" [value]="r.id">
+              {{r.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field class="w-100 asterix-for-label">
+          <mat-label>Загрузить повторно как</mat-label>
+          <mat-select formControlName="courierLoadDouble">
+            <mat-option *ngFor="let d of courierLoadDoubleList" [value]="d.id">
+              {{d.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field class="w-100 asterix-for-label">
+          <mat-label>Связка с ЭСФ</mat-label>
+          <mat-select formControlName="bindingESF">
+            <mat-option *ngFor="let b of bindingESFList" [value]="b.id">
+              {{b.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <div>
+          <mat-checkbox color="primary" formControlName="uniqueAperak">Уникальный АПЕРАК</mat-checkbox>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+</form>
+
+<div mat-dialog-actions *ngIf="isTmplRel">
+  <button class="btn btn-sm btn-primary" (click)="validateAndSaveRel()">Сохранить</button>
+  <button class="btn btn-sm btn-outline-primary ml-1" [mat-dialog-close]="null">Отменить</button>
+</div>
